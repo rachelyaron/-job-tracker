@@ -31,11 +31,17 @@ export async function POST(req: NextRequest) {
     const token = getToken(req);
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const body: JobInsert = await req.json();
     const sb = getSupabaseWithToken(token);
+
+    // Resolve the authenticated user so we can set user_id explicitly.
+    // Never rely on DEFAULT auth.uid() from a server-side context.
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const body: JobInsert = await req.json();
     const { data, error } = await sb
       .from("jobs")
-      .insert({ ...body, updated_at: new Date().toISOString() })
+      .insert({ ...body, user_id: user.id, updated_at: new Date().toISOString() })
       .select()
       .single();
 

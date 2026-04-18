@@ -9,15 +9,14 @@ import AiTips from "@/components/AiTips";
 import AuthForm from "@/components/AuthForm";
 
 export default function Home() {
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [jobs, setJobs]             = useState<Job[]>([]);
+  const [loading, setLoading]       = useState(true);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm]     = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
-  const [filterField, setFilterField] = useState("all");
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [filterField,  setFilterField]  = useState("all");
+  const [userEmail, setUserEmail]   = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  // Always-current token for use inside callbacks
   const tokenRef = useRef<string | null>(null);
 
   const fetchJobs = useCallback(async () => {
@@ -35,8 +34,6 @@ export default function Home() {
 
   useEffect(() => {
     const sb = getSupabase();
-
-    // Check existing session on mount
     sb.auth.getSession().then(({ data }) => {
       tokenRef.current = data.session?.access_token ?? null;
       setUserEmail(data.session?.user?.email ?? null);
@@ -44,15 +41,12 @@ export default function Home() {
       if (data.session) fetchJobs();
       else setLoading(false);
     });
-
-    // Keep token and user state in sync with Supabase auth events
     const { data: { subscription } } = sb.auth.onAuthStateChange((_, session) => {
       tokenRef.current = session?.access_token ?? null;
       setUserEmail(session?.user?.email ?? null);
       if (session) fetchJobs();
       else { setJobs([]); setLoading(false); }
     });
-
     return () => subscription.unsubscribe();
   }, [fetchJobs]);
 
@@ -74,10 +68,7 @@ export default function Home() {
     if (res.ok) setJobs((prev) => prev.filter((j) => j.id !== id));
   };
 
-  const handleEdit = (job: Job) => {
-    setEditingJob(job);
-    setShowForm(true);
-  };
+  const handleEdit = (job: Job) => { setEditingJob(job); setShowForm(true); };
 
   const handleTimelineChange = async (id: string, stages: JobStages) => {
     setJobs((prev) =>
@@ -85,17 +76,12 @@ export default function Home() {
     );
     await fetch(`/api/jobs/${id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${tokenRef.current ?? ""}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenRef.current ?? ""}` },
       body: JSON.stringify({ stages }),
     });
   };
 
-  const handleLogout = async () => {
-    await getSupabase().auth.signOut();
-  };
+  const handleLogout = () => getSupabase().auth.signOut();
 
   const safe = (j: Job) => j.stages?.length ? j.stages : DEFAULT_STAGES;
 
@@ -117,101 +103,104 @@ export default function Home() {
     if (filterStatus === "interview") list = list.filter((j) => hasInterview(safe(j)));
     if (filterStatus === "offer")     list = list.filter((j) => hasOffer(safe(j)));
     if (filterStatus === "rejected")  list = list.filter((j) => !isJobActive(safe(j)) && !hasOffer(safe(j)));
-    if (filterField !== "all")        list = list.filter((j) => j.field === filterField);
+    if (filterField  !== "all")       list = list.filter((j) => j.field === filterField);
     return list;
   })();
 
-  // Waiting for initial session check
+  // Initial auth check spinner
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center" dir="rtl">
-        <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+      <div style={{ minHeight: "100svh", display: "grid", placeItems: "center" }}>
+        <div style={{
+          width: 36, height: 36, borderRadius: "50%",
+          border: "3px solid var(--accent-soft)",
+          borderTopColor: "var(--accent)",
+          animation: "spin 0.8s linear infinite",
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
-  // Not logged in
   if (!userEmail) return <AuthForm />;
 
+  const avatarLetter = userEmail[0].toUpperCase();
+
   return (
-    <main className="min-h-screen bg-slate-50" dir="rtl">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">
-              📋 מעקב מועמדויות
-            </h1>
-            <p className="text-sm text-slate-500 mt-0.5">
-              נהל את חיפוש העבודה שלך
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <AiTips jobs={jobs} />
-            <button
-              onClick={() => {
-                setEditingJob(null);
-                setShowForm(true);
-              }}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors flex items-center gap-2 shadow-sm"
-            >
-              <span>+</span>
-              <span>הוסף מועמדות</span>
-            </button>
-            {/* User info + logout */}
-            <div className="flex items-center gap-2 pr-2 mr-1 border-r border-slate-200">
-              <span className="text-xs text-slate-400 max-w-[140px] truncate hidden sm:block">
-                {userEmail}
-              </span>
-              <button
-                onClick={handleLogout}
-                className="text-sm text-slate-500 hover:text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
-              >
-                התנתק
-              </button>
+    <>
+      <header className="header">
+        <div className="header-inner">
+          <div className="brand">
+            <div className="brand-mark">מ</div>
+            <div>
+              <div className="brand-name">מעקב מועמדויות</div>
+              <div className="brand-sub">Job Tracker</div>
             </div>
+          </div>
+
+          <div style={{ flex: 1 }} />
+
+          <AiTips jobs={jobs} />
+
+          <button
+            onClick={() => { setEditingJob(null); setShowForm(true); }}
+            className="btn btn-primary"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M8 2v12M2 8h12" stroke="white" strokeWidth="2.4" strokeLinecap="round"/>
+            </svg>
+            הוסף מועמדות
+          </button>
+
+          <div className="user-pill">
+            <div className="avatar">{avatarLetter}</div>
+            <span style={{ maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {userEmail}
+            </span>
+            <button className="logout-btn" onClick={handleLogout}>התנתק</button>
           </div>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+      <main className="container" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         <StatsBar jobs={jobs} />
 
-        {/* Filter bar */}
-        <div className="flex gap-2 flex-wrap items-center">
+        <div className="filter-bar">
           {statusFilters.map((f) => (
             <button
               key={f.value}
               onClick={() => setFilterStatus(f.value)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors border ${
-                filterStatus === f.value
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "bg-white text-slate-600 border-slate-200 hover:border-blue-300"
-              }`}
+              className={`chip ${filterStatus === f.value ? "active" : ""}`}
             >
               {f.label}
-              <span className="mr-1.5 text-xs opacity-70">({f.count})</span>
+              <span className="count">({f.count})</span>
             </button>
           ))}
+
           {uniqueFields.length > 0 && (
-            <select
-              value={filterField}
-              onChange={(e) => setFilterField(e.target.value)}
-              className="mr-2 px-3 py-1.5 rounded-full text-sm font-medium border border-slate-200 bg-white text-slate-600 hover:border-blue-300 focus:outline-none focus:border-blue-400 transition-colors"
-            >
-              <option value="all">כל התחומים</option>
-              {uniqueFields.map((f) => (
-                <option key={f} value={f}>{f}</option>
-              ))}
-            </select>
+            <div className="select-wrap" style={{ marginRight: 4 }}>
+              <select
+                value={filterField}
+                onChange={(e) => setFilterField(e.target.value)}
+              >
+                <option value="all">כל התחומים</option>
+                {uniqueFields.map((f) => (
+                  <option key={f} value={f}>{f}</option>
+                ))}
+              </select>
+            </div>
           )}
         </div>
 
-        {/* Table */}
         {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-            <p className="mr-4 text-slate-600">טוען...</p>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "64px 0", gap: 14 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: "50%",
+              border: "3px solid var(--accent-soft)",
+              borderTopColor: "var(--accent)",
+              animation: "spin 0.8s linear infinite",
+            }} />
+            <p style={{ color: "var(--ink-3)" }}>טוען מועמדויות...</p>
           </div>
         ) : (
           <JobTable
@@ -221,18 +210,17 @@ export default function Home() {
             onTimelineChange={handleTimelineChange}
           />
         )}
-      </div>
+      </main>
 
       {showForm && (
         <JobForm
           job={editingJob}
           onSave={handleSave}
-          onCancel={() => {
-            setShowForm(false);
-            setEditingJob(null);
-          }}
+          onCancel={() => { setShowForm(false); setEditingJob(null); }}
         />
       )}
-    </main>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </>
   );
 }

@@ -3,15 +3,13 @@
 import { useState } from "react";
 import { Job, getSupabase } from "@/lib/supabase";
 
-interface AiTipsProps {
-  jobs: Job[];
-}
+interface AiTipsProps { jobs: Job[]; }
 
 export default function AiTips({ jobs }: AiTipsProps) {
-  const [tips, setTips] = useState("");
+  const [tips, setTips]     = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [open, setOpen] = useState(false);
+  const [error, setError]   = useState("");
+  const [open, setOpen]     = useState(false);
 
   const fetchTips = async () => {
     setLoading(true);
@@ -44,49 +42,68 @@ export default function AiTips({ jobs }: AiTipsProps) {
       <button
         onClick={fetchTips}
         disabled={loading || jobs.length === 0}
-        className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 disabled:opacity-50 text-white font-semibold px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 shadow-sm"
+        className="btn btn-ai"
         title={jobs.length === 0 ? "הוסף מועמדויות תחילה" : ""}
       >
-        <span>✨</span>
-        <span>{loading ? "מנתח..." : "טיפים מ-AI"}</span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+            stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        {loading ? "מנתח..." : "טיפים מ-AI"}
       </button>
 
       {open && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
-            <div className="flex items-center justify-between p-6 border-b border-slate-100">
-              <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                <span>✨</span> המלצות AI לשיפור החיפוש
-              </h2>
-              <button
-                onClick={() => setOpen(false)}
-                className="text-slate-400 hover:text-slate-600 text-2xl leading-none"
-              >
-                ×
-              </button>
+        <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
+          <div className="modal lg" style={{ maxHeight: "85vh" }}>
+            <div className="ai-header">
+              <div className="ai-title">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                    stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                המלצות AI לשיפור החיפוש
+              </div>
+              <div className="ai-sub">ניתוח מועמדויות וטיפים מעשיים</div>
             </div>
 
-            <div className="p-6 overflow-y-auto flex-1">
+            <div className="modal-body">
               {loading && (
-                <div className="flex items-center justify-center py-12">
-                  <div className="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin" />
-                  <p className="mr-4 text-slate-600">מנתח את המועמדויות שלך...</p>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "48px 0", gap: 14 }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: "50%",
+                    border: "3px solid #e9d5ff",
+                    borderTopColor: "#8b5cf6",
+                    animation: "spin 0.8s linear infinite",
+                  }} />
+                  <p style={{ color: "var(--ink-3)" }}>מנתח את המועמדויות שלך...</p>
                 </div>
               )}
               {error && (
-                <p className="text-red-600 bg-red-50 border border-red-200 rounded-lg p-4">
+                <div style={{
+                  background: "#fef2f2", border: "1px solid #fecaca",
+                  color: "#b91c1c", borderRadius: 10, padding: "12px 16px", fontSize: 13,
+                }}>
                   {error}
-                </p>
-              )}
-              {tips && (
-                <div className="prose prose-slate max-w-none text-slate-700 whitespace-pre-line leading-relaxed">
-                  {tips}
                 </div>
               )}
+              {tips && (
+                <div className="ai-tip">
+                  <div className="ai-tip-body">{tips}</div>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-foot">
+              <button onClick={() => setOpen(false)} className="btn btn-ghost">סגור</button>
+              <button onClick={fetchTips} disabled={loading} className="btn btn-ai">
+                נתח מחדש
+              </button>
             </div>
           </div>
         </div>
       )}
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </>
   );
 }
