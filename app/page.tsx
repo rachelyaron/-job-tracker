@@ -2,19 +2,26 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Job, JobStages, hasInterview, hasOffer, isJobActive, DEFAULT_STAGES, getSupabase } from "@/lib/supabase";
+import { useSettings } from "@/contexts/SettingsContext";
 import StatsBar from "@/components/StatsBar";
 import JobTable from "@/components/JobTable";
+import CardsView from "@/components/CardsView";
+import KanbanView from "@/components/KanbanView";
 import JobForm from "@/components/JobForm";
 import AiTips from "@/components/AiTips";
 import AuthForm from "@/components/AuthForm";
+import TweaksPanel from "@/components/TweaksPanel";
 
 export default function Home() {
+  const { view, lang, t } = useSettings();
+
   const [jobs, setJobs]             = useState<Job[]>([]);
   const [loading, setLoading]       = useState(true);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [showForm, setShowForm]     = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterField,  setFilterField]  = useState("all");
+  const [search, setSearch]         = useState("");
   const [userEmail, setUserEmail]   = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const tokenRef = useRef<string | null>(null);
@@ -90,11 +97,11 @@ export default function Home() {
   ).sort();
 
   const statusFilters = [
-    { value: "all",       label: "הכל",    count: jobs.length },
-    { value: "active",    label: "בתהליך", count: jobs.filter((j) => isJobActive(safe(j))).length },
-    { value: "interview", label: "ראיון",  count: jobs.filter((j) => hasInterview(safe(j))).length },
-    { value: "offer",     label: "הצעה",   count: jobs.filter((j) => hasOffer(safe(j))).length },
-    { value: "rejected",  label: "נדחיתי", count: jobs.filter((j) => !isJobActive(safe(j)) && !hasOffer(safe(j))).length },
+    { value: "all",       label: t.all,       count: jobs.length },
+    { value: "active",    label: t.active,    count: jobs.filter((j) => isJobActive(safe(j))).length },
+    { value: "interview", label: t.interview, count: jobs.filter((j) => hasInterview(safe(j))).length },
+    { value: "offer",     label: t.offer,     count: jobs.filter((j) => hasOffer(safe(j))).length },
+    { value: "rejected",  label: t.rejected,  count: jobs.filter((j) => !isJobActive(safe(j)) && !hasOffer(safe(j))).length },
   ];
 
   const filteredJobs = (() => {
@@ -104,6 +111,12 @@ export default function Home() {
     if (filterStatus === "offer")     list = list.filter((j) => hasOffer(safe(j)));
     if (filterStatus === "rejected")  list = list.filter((j) => !isJobActive(safe(j)) && !hasOffer(safe(j)));
     if (filterField  !== "all")       list = list.filter((j) => j.field === filterField);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter((j) =>
+        j.company_name.toLowerCase().includes(q) || j.role.toLowerCase().includes(q)
+      );
+    }
     return list;
   })();
 
@@ -131,10 +144,10 @@ export default function Home() {
       <header className="header">
         <div className="header-inner">
           <div className="brand">
-            <div className="brand-mark">מ</div>
+            <div className="brand-mark">{lang === "he" ? "מ" : "JT"}</div>
             <div>
-              <div className="brand-name">מעקב מועמדויות</div>
-              <div className="brand-sub">Job Tracker</div>
+              <div className="brand-name">{t.brand}</div>
+              <div className="brand-sub">{t.sub}</div>
             </div>
           </div>
 
@@ -149,7 +162,7 @@ export default function Home() {
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
               <path d="M8 2v12M2 8h12" stroke="white" strokeWidth="2.4" strokeLinecap="round"/>
             </svg>
-            הוסף מועמדות
+            {t.add}
           </button>
 
           <div className="user-pill">
@@ -157,13 +170,13 @@ export default function Home() {
             <span style={{ maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {userEmail}
             </span>
-            <button className="logout-btn" onClick={handleLogout}>התנתק</button>
+            <button className="logout-btn" onClick={handleLogout}>{t.logout}</button>
           </div>
         </div>
       </header>
 
       <main className="container" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        <StatsBar jobs={jobs} />
+        <StatsBar jobs={jobs} t={t} lang={lang} />
 
         <div className="filter-bar">
           {statusFilters.map((f) => (
@@ -178,18 +191,36 @@ export default function Home() {
           ))}
 
           {uniqueFields.length > 0 && (
-            <div className="select-wrap" style={{ marginRight: 4 }}>
-              <select
-                value={filterField}
-                onChange={(e) => setFilterField(e.target.value)}
-              >
-                <option value="all">כל התחומים</option>
+            <div className="select-wrap" style={{ marginInlineStart: 4 }}>
+              <select value={filterField} onChange={(e) => setFilterField(e.target.value)}>
+                <option value="all">{t.allFields}</option>
                 {uniqueFields.map((f) => (
                   <option key={f} value={f}>{f}</option>
                 ))}
               </select>
             </div>
           )}
+
+          <div className="filter-spacer" />
+
+          <div className="search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2"/>
+              <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            <input
+              placeholder={t.searchPh}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          <div className="view-switch">
+            <button className={view === "table"  ? "active" : ""} onClick={() => {}} title={t.tableView}
+              style={{ pointerEvents: "none", opacity: 0 }} aria-hidden>
+              {/* placeholder to avoid layout shift — real switching is via TweaksPanel */}
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -200,14 +231,33 @@ export default function Home() {
               borderTopColor: "var(--accent)",
               animation: "spin 0.8s linear infinite",
             }} />
-            <p style={{ color: "var(--ink-3)" }}>טוען מועמדויות...</p>
+            <p style={{ color: "var(--ink-3)" }}>{t.loading}</p>
           </div>
+        ) : view === "cards" ? (
+          <CardsView
+            jobs={filteredJobs}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onTimelineChange={handleTimelineChange}
+            t={t}
+            lang={lang}
+          />
+        ) : view === "kanban" ? (
+          <KanbanView
+            jobs={filteredJobs}
+            onEdit={handleEdit}
+            onTimelineChange={handleTimelineChange}
+            t={t}
+            lang={lang}
+          />
         ) : (
           <JobTable
             jobs={filteredJobs}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onTimelineChange={handleTimelineChange}
+            t={t}
+            lang={lang}
           />
         )}
       </main>
@@ -219,6 +269,8 @@ export default function Home() {
           onCancel={() => { setShowForm(false); setEditingJob(null); }}
         />
       )}
+
+      <TweaksPanel />
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </>

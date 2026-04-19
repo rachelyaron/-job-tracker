@@ -2,31 +2,30 @@
 
 import { Job, JobStages, isJobActive, DEFAULT_STAGES } from "@/lib/supabase";
 import Timeline from "@/components/Timeline";
+import { logoStyle, logoInitials } from "@/lib/utils";
+import { Strings } from "@/lib/strings";
 
 interface JobTableProps {
-  jobs: Job[];
-  onEdit: (job: Job) => void;
-  onDelete: (id: string) => void;
+  jobs:             Job[];
+  onEdit:           (job: Job) => void;
+  onDelete:         (id: string) => void;
   onTimelineChange: (id: string, stages: JobStages) => void;
+  t:    Strings;
+  lang: string;
 }
 
-const LOGO_COLORS = 5;
-function logoIdx(name: string) {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) | 0;
-  return Math.abs(h) % LOGO_COLORS;
-}
-
-export default function JobTable({ jobs, onEdit, onDelete, onTimelineChange }: JobTableProps) {
+export default function JobTable({ jobs, onEdit, onDelete, onTimelineChange, t, lang }: JobTableProps) {
   const safeStages = (job: Job): JobStages =>
     job.stages?.length ? job.stages : DEFAULT_STAGES.map((s) => ({ ...s }));
 
   if (jobs.length === 0) {
     return (
-      <div className="empty">
-        <div className="empty-ico">📋</div>
-        <p className="empty-title">אין מועמדויות עדיין</p>
-        <p className="empty-sub">לחץ על ״הוסף מועמדות״ כדי להתחיל לעקוב אחר חיפוש העבודה שלך</p>
+      <div className="table-wrap">
+        <div className="empty">
+          <div className="empty-ico">📋</div>
+          <p className="empty-title">{t.emptyTitle}</p>
+          <p className="empty-sub">{t.emptySub}</p>
+        </div>
       </div>
     );
   }
@@ -39,32 +38,34 @@ export default function JobTable({ jobs, onEdit, onDelete, onTimelineChange }: J
       <table className="table">
         <thead>
           <tr>
-            <th>חברה ותפקיד</th>
-            <th>תחום</th>
-            <th>תאריך הגשה</th>
-            <th>התקדמות</th>
-            <th>קו&quot;ח</th>
-            <th>הערות</th>
+            <th style={{ width: "28%" }}>{t.tableCompany}</th>
+            <th>{t.tableField}</th>
+            <th>{t.tableDate}</th>
+            <th style={{ minWidth: 300 }}>{t.tableProgress}</th>
+            <th>{t.tableCv}</th>
+            <th>{t.tableNotes}</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           {jobs.map((job) => {
-            const stages = safeStages(job);
+            const stages  = safeStages(job);
             const isStale = isJobActive(stages) && new Date(job.updated_at) < sevenDaysAgo;
-            const initial = (job.company_name?.[0] ?? "?").toUpperCase();
 
             return (
               <tr key={job.id} className={isStale ? "stale" : ""}>
-                {/* Company + role merged */}
+                {/* Company + role */}
                 <td>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div className={`co-logo co-logo-${logoIdx(job.company_name)}`}>
-                      {initial}
+                    <div className="co-logo" style={logoStyle(job.company_name)}>
+                      {logoInitials(job.company_name)}
                     </div>
                     <div>
                       <div className="company-name-cell" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        {isStale && <span title="לא עודכן מעל 7 ימים" style={{ fontSize: 13 }}>⚠️</span>}
+                        {isStale && (
+                          <span title={lang === "he" ? "לא עודכן מעל 7 ימים" : "Not updated in 7+ days"}
+                            style={{ color: "#f59e0b", fontSize: 13 }}>●</span>
+                        )}
                         {job.company_name}
                       </div>
                       <div className="company-role-cell">{job.role}</div>
@@ -81,7 +82,7 @@ export default function JobTable({ jobs, onEdit, onDelete, onTimelineChange }: J
 
                 {/* Date */}
                 <td className="date-cell">
-                  {new Date(job.date_applied).toLocaleDateString("he-IL")}
+                  {new Date(job.date_applied).toLocaleDateString(lang === "he" ? "he-IL" : "en-GB")}
                 </td>
 
                 {/* Timeline */}
@@ -101,27 +102,29 @@ export default function JobTable({ jobs, onEdit, onDelete, onTimelineChange }: J
                         <path d="M4 2h6l4 4v8H4V2z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
                         <path d="M10 2v4h4" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
                       </svg>
-                      צפה
+                      {t.view}
                     </a>
                   ) : (
                     <span style={{ color: "var(--ink-5)" }}>—</span>
                   )}
                 </td>
 
-                {/* Notes */}
+                {/* Notes / link */}
                 <td>
                   <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                     {job.job_link && (
                       <a href={job.job_link} target="_blank" rel="noopener noreferrer"
                         style={{ color: "var(--accent)", fontSize: 12.5, fontWeight: 500 }}>
-                        קישור למשרה ↗
+                        {lang === "he" ? "קישור למשרה ↗" : "Job link ↗"}
                       </a>
                     )}
                     {job.notes && (
                       <span title={job.notes}
-                        style={{ color: "var(--ink-3)", fontSize: 12.5, cursor: "help",
+                        style={{
+                          color: "var(--ink-3)", fontSize: 12.5, cursor: "help",
                           maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis",
-                          whiteSpace: "nowrap", display: "block" }}>
+                          whiteSpace: "nowrap", display: "block",
+                        }}>
                         {job.notes}
                       </span>
                     )}
@@ -131,7 +134,7 @@ export default function JobTable({ jobs, onEdit, onDelete, onTimelineChange }: J
                 {/* Actions */}
                 <td>
                   <div className="row-actions">
-                    <button onClick={() => onEdit(job)} title="ערוך">
+                    <button onClick={() => onEdit(job)} title={lang === "he" ? "ערוך" : "Edit"}>
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
                         <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"
                           stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -141,11 +144,9 @@ export default function JobTable({ jobs, onEdit, onDelete, onTimelineChange }: J
                     </button>
                     <button
                       className="delete"
-                      title="מחק"
+                      title={lang === "he" ? "מחק" : "Delete"}
                       onClick={() => {
-                        if (confirm(`למחוק את המועמדות ל${job.company_name}?`)) {
-                          onDelete(job.id);
-                        }
+                        if (confirm(t.confirmDelete)) onDelete(job.id);
                       }}
                     >
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none">

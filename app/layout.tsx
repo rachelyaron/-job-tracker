@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Heebo, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { SettingsProvider } from "@/contexts/SettingsContext";
 
 const heebo = Heebo({
   subsets: ["hebrew", "latin"],
@@ -35,9 +36,12 @@ export default function RootLayout({
     <html
       lang="he"
       dir="rtl"
+      suppressHydrationWarning
       className={`${heebo.variable} ${inter.variable} ${jetbrainsMono.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        <SettingsProvider>{children}</SettingsProvider>
+      </body>
     </html>
   );
 }

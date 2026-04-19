@@ -1,10 +1,15 @@
 "use client";
 
 import { Job, hasInterview, hasOffer, isJobActive, DEFAULT_STAGES } from "@/lib/supabase";
+import { Strings } from "@/lib/strings";
 
-interface StatsBarProps { jobs: Job[]; }
+interface StatsBarProps {
+  jobs: Job[];
+  t:    Strings;
+  lang: string;
+}
 
-export default function StatsBar({ jobs }: StatsBarProps) {
+export default function StatsBar({ jobs, t, lang }: StatsBarProps) {
   const safe = (j: Job) => j.stages?.length ? j.stages : DEFAULT_STAGES;
   const total          = jobs.length;
   const interviews     = jobs.filter((j) => hasInterview(safe(j))).length;
@@ -29,10 +34,10 @@ export default function StatsBar({ jobs }: StatsBarProps) {
           </div>
           <div>
             <p className="stale-title">
-              תזכורת: {stale.length} מועמדות לא עודכנו מעל 7 ימים
+              {t.staleTitle.replace("{n}", String(stale.length))}
             </p>
             <p className="stale-body">
-              {stale.map((j) => `${j.company_name} — ${j.role}`).join(" | ")}
+              {stale.map((j) => j.company_name).join(" · ")}
             </p>
           </div>
         </div>
@@ -42,7 +47,7 @@ export default function StatsBar({ jobs }: StatsBarProps) {
         <div className="stat tint-blue">
           <div className="stat-accent" />
           <div className="stat-head">
-            <span className="stat-label">סה״כ מועמדויות</span>
+            <span className="stat-label">{t.statTotal}</span>
             <div className="stat-icon">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                 <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
@@ -51,13 +56,13 @@ export default function StatsBar({ jobs }: StatsBarProps) {
             </div>
           </div>
           <div className="stat-value">{total}</div>
-          <div className="stat-sub">בקשות שהוגשו</div>
+          <div className="stat-sub">{lang === "he" ? "בקשות שהוגשו" : "applications sent"}</div>
         </div>
 
         <div className="stat tint-purple">
           <div className="stat-accent" />
           <div className="stat-head">
-            <span className="stat-label">ראיונות</span>
+            <span className="stat-label">{t.statInterviews}</span>
             <div className="stat-icon">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                 <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"
@@ -66,13 +71,13 @@ export default function StatsBar({ jobs }: StatsBarProps) {
             </div>
           </div>
           <div className="stat-value">{interviews}</div>
-          <div className="stat-sub">הגעת לראיון</div>
+          <div className="stat-sub">{lang === "he" ? "הגעת לראיון" : "reached interview"}</div>
         </div>
 
         <div className="stat tint-green">
           <div className="stat-accent" />
           <div className="stat-head">
-            <span className="stat-label">הצעות עבודה</span>
+            <span className="stat-label">{t.statOffers}</span>
             <div className="stat-icon">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                 <path d="M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3"
@@ -81,13 +86,13 @@ export default function StatsBar({ jobs }: StatsBarProps) {
             </div>
           </div>
           <div className="stat-value">{offers}</div>
-          <div className="stat-sub">הצעות שהתקבלו</div>
+          <div className="stat-sub">{lang === "he" ? "הצעות שהתקבלו" : "offers received"}</div>
         </div>
 
         <div className="stat tint-orange">
           <div className="stat-accent" />
           <div className="stat-head">
-            <span className="stat-label">אחוז המרה</span>
+            <span className="stat-label">{t.statConversion}</span>
             <div className="stat-icon">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                 <path d="M18 20V10M12 20V4M6 20v-6"
@@ -96,7 +101,7 @@ export default function StatsBar({ jobs }: StatsBarProps) {
             </div>
           </div>
           <div className="stat-value">{conversionRate}%</div>
-          <div className="stat-sub">הגשה לראיון</div>
+          <div className="stat-sub">{lang === "he" ? "הגשה לראיון" : "application to interview"}</div>
         </div>
       </div>
     </div>
