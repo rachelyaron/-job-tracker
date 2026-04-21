@@ -171,9 +171,9 @@ export default function Home() {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
             <path d="M5 3l14 9-14 9V3z" fill="currentColor"/>
           </svg>
-          מצב הדגמה — השינויים אינם נשמרים
+          {t.demoBanner}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-          <a href="/" className="demo-banner-exit">יציאה מהדמו ←</a>
+          <a href="/" className="demo-banner-exit">{t.demoExit} ←</a>
         </div>
       )}
 

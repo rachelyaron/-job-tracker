@@ -62,6 +62,7 @@ export default function CardsView({ jobs, onEdit, onDelete, onTimelineChange, t,
               <Timeline
                 stages={stages}
                 onChange={(updated) => onTimelineChange(job.id, updated)}
+                lang={lang}
               />
             </div>
 

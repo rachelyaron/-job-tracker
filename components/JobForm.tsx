@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Job, JobInsert, DEFAULT_STAGES, applyStageClick, getSupabase, getSupabaseWithToken } from "@/lib/supabase";
+import { Job, JobInsert, DEFAULT_STAGES, DEFAULT_STAGES_EN, applyStageClick, getSupabase, getSupabaseWithToken } from "@/lib/supabase";
+import { useSettings } from "@/contexts/SettingsContext";
 
 interface JobFormProps {
-  job?: Job | null;
-  onSave: (job: Job) => void;
+  job?:     Job | null;
+  onSave:   (job: Job) => void;
   onCancel: () => void;
-  isDemo?: boolean;
+  isDemo?:  boolean;
 }
 
 function StageStateIcon({ state }: { state: string }) {
@@ -29,51 +30,53 @@ function StageStateIcon({ state }: { state: string }) {
 }
 
 export default function JobForm({ job, onSave, onCancel, isDemo = false }: JobFormProps) {
+  const { t, lang } = useSettings();
+
   const keyCounter = useRef(0);
-  const nextKey = useCallback(() => String(++keyCounter.current), []);
-  const makeKeys = (count: number) => Array.from({ length: count }, () => nextKey());
+  const nextKey    = useCallback(() => String(++keyCounter.current), []);
+  const makeKeys   = (count: number) => Array.from({ length: count }, () => nextKey());
 
-  const [stageKeys, setStageKeys] = useState<string[]>(() => makeKeys(DEFAULT_STAGES.length));
+  const defaultStages = lang === "en" ? DEFAULT_STAGES_EN : DEFAULT_STAGES;
 
+  const [stageKeys, setStageKeys] = useState<string[]>(() => makeKeys(defaultStages.length));
   const [form, setForm] = useState<JobInsert>({
     company_name: "",
     role: "",
     date_applied: new Date().toISOString().split("T")[0],
     field: "",
-    stages: DEFAULT_STAGES.map((s) => ({ ...s })),
+    stages: defaultStages.map((s) => ({ ...s })),
     job_link: "",
     cv_url: null,
     notes: "",
   });
-  const [cvFile, setCvFile] = useState<File | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const [cvFile, setCvFile]   = useState<File | null>(null);
+  const [saving, setSaving]   = useState(false);
+  const [error,  setError]    = useState("");
 
   useEffect(() => {
     if (job) {
       const src = job.stages?.length
         ? job.stages.map((s) => ({ ...s }))
-        : DEFAULT_STAGES.map((s) => ({ ...s }));
+        : defaultStages.map((s) => ({ ...s }));
       setStageKeys(makeKeys(src.length));
       setForm({
         company_name: job.company_name,
-        role: job.role,
+        role:         job.role,
         date_applied: job.date_applied,
-        field: job.field || "",
-        stages: src,
-        job_link: job.job_link || "",
-        cv_url: job.cv_url || null,
-        notes: job.notes || "",
+        field:        job.field    || "",
+        stages:       src,
+        job_link:     job.job_link || "",
+        cv_url:       job.cv_url   || null,
+        notes:        job.notes    || "",
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [job]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
 
-  const handleStageClick  = (idx: number) =>
+  const handleStageClick = (idx: number) =>
     setForm((prev) => ({ ...prev, stages: applyStageClick(prev.stages, idx) }));
 
   const handleStageName = (idx: number, name: string) =>
@@ -92,10 +95,7 @@ export default function JobForm({ job, onSave, onCancel, isDemo = false }: JobFo
 
   const removeStage = (idx: number) => {
     setStageKeys((prev) => prev.filter((_, i) => i !== idx));
-    setForm((prev) => ({
-      ...prev,
-      stages: prev.stages.filter((_, i) => i !== idx),
-    }));
+    setForm((prev) => ({ ...prev, stages: prev.stages.filter((_, i) => i !== idx) }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -132,11 +132,11 @@ export default function JobForm({ job, onSave, onCancel, isDemo = false }: JobFo
 
       let cv_url = form.cv_url || null;
       if (cvFile) {
-        const ext = cvFile.name.split(".").pop() ?? "pdf";
+        const ext  = cvFile.name.split(".").pop() ?? "pdf";
         const path = `${crypto.randomUUID()}.${ext}`;
-        const sb = getSupabaseWithToken(token);
+        const sb   = getSupabaseWithToken(token);
         const { error: uploadError } = await sb.storage.from("cvs").upload(path, cvFile, { upsert: false });
-        if (uploadError) throw new Error(`העלאת קו"ח נכשלה: ${uploadError.message}`);
+        if (uploadError) throw new Error(`${t.cvLabel}: ${uploadError.message}`);
         const { data: urlData } = getSupabaseWithToken(token).storage.from("cvs").getPublicUrl(path);
         cv_url = urlData.publicUrl;
       }
@@ -150,22 +150,24 @@ export default function JobForm({ job, onSave, onCancel, isDemo = false }: JobFo
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "שגיאה בשמירה");
+        throw new Error(data.error || t.saving);
       }
       onSave(await res.json());
     } catch (err) {
-      setError(err instanceof Error ? err.message : "שגיאה לא ידועה");
+      setError(err instanceof Error ? err.message : t.saving);
     } finally {
       setSaving(false);
     }
   };
+
+  const fieldList = t.fieldSuggestions.split(",");
 
   return (
     <div className="modal-backdrop">
       <div className="modal">
         <div className="modal-head">
           <h2 className="modal-title">
-            {job ? "עריכת מועמדות" : "הוספת מועמדות חדשה"}
+            {job ? t.formEditTitle : t.formAddTitle}
           </h2>
           <button type="button" className="modal-close" onClick={onCancel}>×</button>
         </div>
@@ -183,50 +185,56 @@ export default function JobForm({ job, onSave, onCancel, isDemo = false }: JobFo
             )}
 
             <div className="form-grid">
+              {/* Company */}
               <div className="field">
-                <label>שם החברה <span style={{ color: "var(--accent)" }}>*</span></label>
+                <label>
+                  {t.companyLabel} <span style={{ color: "var(--accent)" }}>*</span>
+                </label>
                 <input name="company_name" value={form.company_name} onChange={handleChange}
-                  required placeholder="לדוגמה: Google" className="input" />
+                  required placeholder={t.companyPh} className="input" />
               </div>
 
+              {/* Role */}
               <div className="field">
-                <label>תפקיד <span style={{ color: "var(--accent)" }}>*</span></label>
+                <label>
+                  {t.roleLabel} <span style={{ color: "var(--accent)" }}>*</span>
+                </label>
                 <input name="role" value={form.role} onChange={handleChange}
-                  required placeholder="לדוגמה: מפתח Full Stack" className="input" />
+                  required placeholder={t.rolePh} className="input" />
               </div>
 
+              {/* Field */}
               <div className="field">
-                <label>תחום</label>
+                <label>{t.fieldLabel}</label>
                 <input
                   name="field" value={form.field || ""} onChange={handleChange}
                   list="field-suggestions" autoComplete="off"
-                  placeholder="טכנולוגיה, שיווק, מכירות..." className="input"
+                  placeholder={t.fieldPh} className="input"
                 />
                 <datalist id="field-suggestions">
-                  <option value="טכנולוגיה" /><option value="שיווק" /><option value="מכירות" />
-                  <option value="משאבי אנוש" /><option value="פיננסים" /><option value="עיצוב" />
-                  <option value="ניהול מוצר" /><option value="נתונים ו-AI" /><option value="אבטחת מידע" />
-                  <option value="תפעול" /><option value="משפטי" /><option value="חינוך" />
-                  <option value="בריאות" /><option value="נדל״ן" /><option value="לוגיסטיקה" />
-                  <option value="שירות לקוחות" />
+                  {fieldList.map((f) => <option key={f} value={f} />)}
                 </datalist>
               </div>
 
+              {/* Date */}
               <div className="field">
-                <label>תאריך הגשה <span style={{ color: "var(--accent)" }}>*</span></label>
+                <label>
+                  {t.dateLabel} <span style={{ color: "var(--accent)" }}>*</span>
+                </label>
                 <input name="date_applied" type="date" value={form.date_applied}
                   onChange={handleChange} required className="input" />
               </div>
 
+              {/* Stages */}
               <div className="field full">
-                <label>שלבי התהליך</label>
+                <label>{t.stagesLabel}</label>
                 <div className="stage-editor">
                   {form.stages.map((stage, idx) => (
                     <div key={stageKeys[idx] ?? idx} className="stage-row">
                       <button
                         type="button"
                         onClick={() => handleStageClick(idx)}
-                        title="לחץ לשינוי סטטוס"
+                        title={t.stageCycleTip}
                         className={`stage-btn ${stage.state === "completed" ? "completed" : stage.state === "failed" ? "failed" : ""}`}
                       >
                         <StageStateIcon state={stage.state} />
@@ -234,16 +242,15 @@ export default function JobForm({ job, onSave, onCancel, isDemo = false }: JobFo
                       <input
                         value={stage.name}
                         onChange={(e) => handleStageName(idx, e.target.value)}
-                        placeholder={`שם שלב ${idx + 1}`}
+                        placeholder={`${t.stageNamePh} ${idx + 1}`}
                         className="input"
-                        dir="rtl"
                       />
                       <button
                         type="button"
                         onClick={() => removeStage(idx)}
                         disabled={form.stages.length === 1}
                         className="stage-remove"
-                        title="הסר שלב"
+                        title={t.removeStageTitle}
                       >
                         <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
                           <path d="M3 3L13 13M13 3L3 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
@@ -255,25 +262,29 @@ export default function JobForm({ job, onSave, onCancel, isDemo = false }: JobFo
                     <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
                       <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
                     </svg>
-                    הוסף שלב
+                    {t.addStageBtn}
                   </button>
                   <div className="stage-help">
-                    לחץ על עיגול לשינוי סטטוס:
-                    <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: "var(--state-pending)", verticalAlign: "middle" }} /> אפור →
-                    <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: "var(--state-completed)", verticalAlign: "middle" }} /> ירוק →
-                    <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: "var(--state-failed)", verticalAlign: "middle" }} /> אדום
+                    {t.stageHelpText}&nbsp;
+                    <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: "var(--state-pending)", verticalAlign: "middle" }} />
+                    {" → "}
+                    <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: "var(--state-completed)", verticalAlign: "middle" }} />
+                    {" → "}
+                    <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: "var(--state-failed)", verticalAlign: "middle" }} />
                   </div>
                 </div>
               </div>
 
+              {/* Job link */}
               <div className="field">
-                <label>קישור למשרה</label>
+                <label>{t.jobLinkLabel}</label>
                 <input name="job_link" type="text" value={form.job_link || ""}
                   onChange={handleChange} placeholder="https://..." className="input" />
               </div>
 
+              {/* CV upload */}
               <div className="field">
-                <label>קו&quot;ח (PDF / Word)</label>
+                <label>{t.cvLabel}</label>
                 <div className="file-input">
                   <div className="file-ico">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -285,12 +296,12 @@ export default function JobForm({ job, onSave, onCancel, isDemo = false }: JobFo
                   </div>
                   <div className="file-text">
                     <div className="file-title">
-                      {cvFile ? cvFile.name : "בחר קובץ קו״ח"}
+                      {cvFile ? cvFile.name : t.cvPickFile}
                     </div>
                     <div className="file-sub">
                       {!cvFile && form.cv_url
                         ? <a href={form.cv_url} target="_blank" rel="noopener noreferrer"
-                            style={{ color: "var(--accent)" }}>קובץ קיים — לחץ לצפייה</a>
+                            style={{ color: "var(--accent)" }}>{t.cvExisting}</a>
                         : "PDF, DOC, DOCX"}
                     </div>
                   </div>
@@ -302,10 +313,11 @@ export default function JobForm({ job, onSave, onCancel, isDemo = false }: JobFo
                 </div>
               </div>
 
+              {/* Notes */}
               <div className="field full">
-                <label>הערות</label>
+                <label>{t.notesLabel}</label>
                 <textarea name="notes" value={form.notes || ""} onChange={handleChange}
-                  placeholder="מידע נוסף, שם איש קשר..." className="input" />
+                  placeholder={t.notesPh} className="input" />
               </div>
             </div>
           </form>
@@ -313,10 +325,10 @@ export default function JobForm({ job, onSave, onCancel, isDemo = false }: JobFo
 
         <div className="modal-foot">
           <button type="button" onClick={onCancel} className="btn btn-ghost">
-            ביטול
+            {t.cancel}
           </button>
           <button type="submit" form="job-form" disabled={saving} className="btn btn-primary">
-            {saving ? "שומר..." : job ? "עדכן מועמדות" : "הוסף מועמדות"}
+            {saving ? t.saving : job ? t.update : t.save}
           </button>
         </div>
       </div>

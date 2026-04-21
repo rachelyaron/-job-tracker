@@ -62,6 +62,7 @@ export default function KanbanView({ jobs, onEdit, onTimelineChange, t, lang }: 
                       stages={stages}
                       onChange={(updated) => onTimelineChange(job.id, updated)}
                       compact
+                      lang={lang}
                     />
                   </div>
 

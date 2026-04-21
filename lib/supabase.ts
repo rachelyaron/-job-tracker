@@ -46,6 +46,25 @@ export const DEFAULT_STAGES: JobStages = [
   { name: "הצעה",           state: "not_reached" },
 ];
 
+export const DEFAULT_STAGES_EN: JobStages = [
+  { name: "Applied",          state: "not_reached" },
+  { name: "Phone Screen",     state: "not_reached" },
+  { name: "HR Interview",     state: "not_reached" },
+  { name: "Technical",        state: "not_reached" },
+  { name: "Final Interview",  state: "not_reached" },
+  { name: "Offer",            state: "not_reached" },
+];
+
+/** Hebrew → English display name map for the standard pipeline stages */
+export const STAGE_NAME_EN: Record<string, string> = {
+  "הגשתי מועמדות": "Applied",
+  "שיחת טלפון":    "Phone Screen",
+  "ראיון HR":       "HR Interview",
+  "ראיון טכני":    "Technical",
+  "ראיון סופי":    "Final Interview",
+  "הצעה":           "Offer",
+};
+
 function cycleState(s: StageState): StageState {
   if (s === "not_reached") return "completed";
   if (s === "completed")   return "failed";

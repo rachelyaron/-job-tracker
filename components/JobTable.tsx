@@ -91,6 +91,7 @@ export default function JobTable({ jobs, onEdit, onDelete, onTimelineChange, t, 
                     stages={stages}
                     onChange={(updated) => onTimelineChange(job.id, updated)}
                     compact
+                    lang={lang}
                   />
                 </td>
 

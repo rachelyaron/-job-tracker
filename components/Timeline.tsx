@@ -1,12 +1,13 @@
 "use client";
 
 import { Fragment } from "react";
-import { JobStages, applyStageClick } from "@/lib/supabase";
+import { JobStages, applyStageClick, STAGE_NAME_EN } from "@/lib/supabase";
 
 interface TimelineProps {
-  stages: JobStages;
+  stages:    JobStages;
   onChange?: (updated: JobStages) => void;
-  compact?: boolean;
+  compact?:  boolean;
+  lang?:     string;
 }
 
 function CheckIcon() {
@@ -26,9 +27,12 @@ function XIcon() {
   );
 }
 
-export default function Timeline({ stages, onChange, compact = false }: TimelineProps) {
-  // The "active" node: first not_reached stage after all completed ones.
-  // If there's a failure, nothing is active.
+function displayName(name: string, lang?: string): string {
+  if (lang !== "en") return name;
+  return STAGE_NAME_EN[name] ?? name;
+}
+
+export default function Timeline({ stages, onChange, compact = false, lang }: TimelineProps) {
   const hasFailure = stages.some((s) => s.state === "failed");
   const activeIdx  = hasFailure
     ? -1
@@ -37,20 +41,18 @@ export default function Timeline({ stages, onChange, compact = false }: Timeline
   return (
     <div
       className="timeline"
-      dir="rtl"
+      dir="ltr"
       style={{ minWidth: compact ? Math.max(180, stages.length * 46) : undefined }}
     >
       {stages.map((stage, idx) => {
         const isLast = idx === stages.length - 1;
         const next   = !isLast ? stages[idx + 1] : null;
 
-        // Connector class
         const connectorClass =
           stage.state === "completed" && next?.state === "completed" ? "completed" :
           stage.state === "completed" && next?.state === "failed"    ? "failed"    :
           "";
 
-        // Node class
         const nodeClass = [
           "timeline-node",
           stage.state === "completed" ? "completed" : "",
@@ -58,6 +60,8 @@ export default function Timeline({ stages, onChange, compact = false }: Timeline
           idx === activeIdx           ? "active"    : "",
           !onChange                   ? "readonly"  : "",
         ].filter(Boolean).join(" ");
+
+        const label = displayName(stage.name, lang) || `${idx + 1}`;
 
         return (
           <Fragment key={idx}>
@@ -67,15 +71,9 @@ export default function Timeline({ stages, onChange, compact = false }: Timeline
                 className={nodeClass}
                 onClick={() => onChange?.(applyStageClick(stages, idx))}
                 disabled={!onChange}
-                title={stage.name}
-                aria-label={`${stage.name}: ${
-                  stage.state === "completed" ? "עבר" :
-                  stage.state === "failed"    ? "נכשל" : "טרם הגיע"
-                }`}
-                style={{
-                  width:  compact ? 24 : 28,
-                  height: compact ? 24 : 28,
-                }}
+                title={label}
+                aria-label={label}
+                style={{ width: compact ? 24 : 28, height: compact ? 24 : 28 }}
               >
                 {stage.state === "completed" && <CheckIcon />}
                 {stage.state === "failed"    && <XIcon />}
@@ -83,9 +81,7 @@ export default function Timeline({ stages, onChange, compact = false }: Timeline
                   <div style={{ width: 7, height: 7, borderRadius: "50%", background: "white", opacity: 0.9 }} />
                 )}
               </button>
-              <span className="timeline-label">
-                {stage.name || `שלב ${idx + 1}`}
-              </span>
+              <span className="timeline-label">{label}</span>
             </div>
 
             {!isLast && (
