@@ -1,62 +1,80 @@
-# מעקב מועמדויות · Job Application Tracker
+# Job Application Tracker - מעקב מועמדויות
 
-> A full-stack, bilingual (Hebrew/English) job search management app — track every application, interview stage, and offer in one clean dashboard.
+Most job seekers manage their search across spreadsheets, scattered emails, and handwritten notes. Applications get forgotten, follow-ups slip through the cracks, and it is impossible to see the full picture at a glance. This app solves that.
 
-**[→ Live Demo](https://job-application-tracker-rachelyaron.vercel.app)** &nbsp;·&nbsp; No sign-up needed — click the demo button
+**Job Application Tracker** is a full-stack bilingual web app that gives job seekers one place to track every application, move it through interview stages, and understand what is and is not working in their search.
+
+**[Live Demo - job-tracker-blond-one.vercel.app](https://job-tracker-blond-one.vercel.app)**
+No sign-up needed - click the demo button to explore with pre-loaded sample data.
 
 ---
 
 ## Screenshots
 
-| Landing | Dashboard — Table view |
-|---------|----------------------|
-| ![Landing](docs/screenshots/login.png) | ![Dashboard](docs/screenshots/dashboard.png) |
+| Landing page | Dashboard |
+|---|---|
+| ![Landing](public/demo.png) | ![Dashboard](public/deshboard.png) |
 
 | Cards view | Kanban board |
-|------------|--------------|
-| ![Cards](docs/screenshots/cards.png) | ![Kanban](docs/screenshots/kanban.png) |
+|---|---|
+| ![Cards](public/card.png) | ![Board](public/board.png) |
 
-| Dark mode | Tweaks panel |
-|-----------|--------------|
-| ![Dark mode](docs/screenshots/dark.png) | ![Tweaks](docs/screenshots/tweaks.png) |
+| Dark mode | Settings panel |
+|---|---|
+| ![Dark mode](public/dark.png) | ![Settings](public/tweaks.png) |
+
+---
+
+## The Problem
+
+Job searching is a full-time job. At any given time you might have 20 open applications in different stages - some waiting for HR callbacks, some mid-technical-interview, some silently rejected. Without a system, it is easy to:
+
+- Forget to follow up on applications that have gone quiet
+- Lose track of which CV version you sent where
+- Have no idea what your interview conversion rate actually is
+- Miss that a recruiter emailed back three days ago
+
+This app is the system.
 
 ---
 
 ## Features
 
-### Core
-- **Visual stage pipeline** — clickable timeline per application (Applied → Screen → HR → Technical → Final → Offer); click to cycle states (pending / done / rejected)
-- **Three views** — Table, Cards grid, and Kanban board; switch instantly from the Tweaks panel
-- **Live stats bar** — total applications, interviews reached, offers received, and interview conversion rate
-- **Stale alerts** — banner highlights applications not updated in 7+ days
+### Application Pipeline
+- **Visual stage timeline** - each application has a clickable pipeline (Applied, Phone Screen, HR Interview, Technical, Final Interview, Offer). Click any stage to mark it complete, in progress, or failed
+- **Custom stages** - add, remove, and rename stages to match any company's hiring process
+- **CV per application** - upload a resume PDF to each role so you always know which version you sent
 
-### UX & Personalization
-- **Dark mode** — full dark theme with adapted gradients, tints, and frosted-glass header
-- **Density control** — comfortable and compact row spacing
-- **Bilingual** — complete Hebrew (RTL) and English (LTR) UI, switchable at runtime, persisted to `localStorage`
-- **Search & filter** — instant search by company or role; filter by status chip or industry field
+### Dashboard and Insights
+- **Stats bar** - live counts for total applications, interviews reached, offers received, and interview-to-application conversion rate
+- **Stale application alerts** - a warning banner surfaces any active application not updated in 7 or more days, so nothing goes quiet without you noticing
 
-### Data & AI
-- **CV upload** — attach a resume PDF per application, stored in Supabase Storage
-- **AI Tips** — on-demand analysis of your job search with actionable recommendations (powered by Claude)
-- **Per-user data isolation** — Row Level Security ensures every user sees only their own applications
+### Three View Modes
+- **Table view** - dense, scannable list with all key info in one row
+- **Cards view** - visual grid layout, one card per application
+- **Kanban board** - column-based view grouped by pipeline stage (Applied, Screening, Interviewing, Offer, Rejected)
 
-### Demo
-- **Zero-friction demo** — fully interactive at `/?demo=true`; pre-loaded with 5 realistic sample applications across all stages; all changes are in-memory only, no account required
+### Personalization
+- **Bilingual UI** - full Hebrew (right-to-left) and English (left-to-right) support, switchable at runtime from the settings panel
+- **Dark mode** - complete dark theme with adapted colors and gradients
+- **Density control** - comfortable and compact row spacing
+
+### Other
+- **Search and filter** - instant search by company or role name, filter by status or industry field
+- **AI tips** - on-demand analysis of your job search with actionable recommendations
 
 ---
 
 ## Tech Stack
 
 | Layer | Technology |
-|-------|------------|
-| Framework | [Next.js 15](https://nextjs.org) (App Router, React 19) |
+|---|---|
+| Framework | Next.js 15 (App Router, React 19) |
 | Language | TypeScript |
-| Styling | Global CSS with design tokens — no CSS-in-JS, no component libraries |
-| Auth & DB | [Supabase](https://supabase.com) — PostgreSQL + RLS + Storage |
-| AI | [Anthropic Claude API](https://anthropic.com) |
-| Fonts | Heebo · Inter · JetBrains Mono via `next/font/google` (self-hosted) |
-| Deployment | [Vercel](https://vercel.com) |
+| Styling | Tailwind CSS + custom design token system |
+| Auth and Database | Supabase (PostgreSQL, Row Level Security, Storage) |
+| AI | Anthropic Claude API |
+| Deployment | Vercel |
 
 ---
 
@@ -64,11 +82,11 @@
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 18 or higher
 - A [Supabase](https://supabase.com) project
-- An [Anthropic](https://console.anthropic.com) API key
+- An [Anthropic](https://console.anthropic.com) API key (optional - only needed for AI tips)
 
-### 1. Clone & install
+### 1. Clone and install
 
 ```bash
 git clone https://github.com/rachelyaron/-Job-Application-Tracker.git
@@ -76,11 +94,9 @@ cd -Job-Application-Tracker
 npm install
 ```
 
-### 2. Environment variables
+### 2. Set environment variables
 
-```bash
-cp .env.example .env.local
-```
+Create a `.env.local` file in the project root:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
@@ -88,9 +104,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ANTHROPIC_API_KEY=your_anthropic_api_key
 ```
 
-### 3. Database setup
+### 3. Set up the database
 
-Run this in your Supabase SQL editor:
+Run the following SQL in your Supabase SQL editor:
 
 ```sql
 create table jobs (
@@ -120,56 +136,58 @@ create policy "users_delete_own" on jobs for delete using (auth.uid() = user_id)
 
 ```bash
 npm run dev
-# → http://localhost:3000
 ```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
 ## Project Structure
 
 ```
-├── app/
-│   ├── api/
-│   │   ├── jobs/           # GET · POST (list & create)
-│   │   ├── jobs/[id]/      # PUT · DELETE (update & remove)
-│   │   ├── ai-tips/        # Claude-powered job search analysis
-│   │   └── demo/seed/      # One-shot demo data seeder
-│   ├── globals.css         # Design token system + all component styles
-│   ├── layout.tsx          # Root layout — fonts, SettingsProvider
-│   └── page.tsx            # App shell — auth, demo detection, view routing
-│
-├── components/
-│   ├── JobTable.tsx        # Table view with inline timeline
-│   ├── CardsView.tsx       # Responsive card grid
-│   ├── KanbanView.tsx      # 5-column kanban board
-│   ├── JobForm.tsx         # Add / edit modal with stage editor & CV upload
-│   ├── Timeline.tsx        # Interactive stage pipeline component
-│   ├── StatsBar.tsx        # KPI cards + stale application banner
-│   ├── AiTips.tsx          # AI analysis drawer
-│   ├── TweaksPanel.tsx     # Floating settings panel (theme · density · view · lang)
-│   └── AuthForm.tsx        # Demo entry screen
-│
-├── contexts/
-│   └── SettingsContext.tsx # Global settings state with localStorage persistence
-│
-└── lib/
-    ├── supabase.ts         # Supabase client factory + domain types
-    ├── strings.ts          # i18n strings — Hebrew & English
-    ├── utils.ts            # Logo gradients · initials · kanban column mapping
-    └── demo-data.ts        # Static demo jobs (no Supabase needed)
+app/
+  api/
+    jobs/          - CRUD endpoints with RLS-scoped Supabase client
+    ai-tips/       - Claude-powered job search analysis
+    demo/seed/     - Seeds the demo account with sample data
+  globals.css      - Design token system and all component styles
+  layout.tsx       - Root layout with font loading and SettingsProvider
+  page.tsx         - App shell handling auth, demo mode, and view routing
+
+components/
+  JobTable.tsx     - Table view
+  CardsView.tsx    - Cards grid view
+  KanbanView.tsx   - Kanban board view
+  JobForm.tsx      - Add and edit modal with stage editor and CV upload
+  Timeline.tsx     - Interactive stage pipeline component
+  StatsBar.tsx     - KPI cards and stale application banner
+  TweaksPanel.tsx  - Floating settings panel (theme, density, view, language)
+  AiTips.tsx       - AI analysis modal
+  AuthForm.tsx     - Demo entry screen
+
+contexts/
+  SettingsContext.tsx  - Global theme, density, language, and view state
+
+lib/
+  supabase.ts      - Supabase client factory and domain types
+  strings.ts       - i18n strings for Hebrew and English
+  utils.ts         - Logo gradients, initials, kanban column mapping
+  demo-data.ts     - Static demo jobs for no-auth preview
 ```
 
 ---
 
-## Architecture Notes
+## Roadmap
 
-- **RLS everywhere** — API routes create a per-request Supabase client with the user's JWT (`getSupabaseWithToken`), so Row Level Security enforces data isolation at the database level
-- **No auth in demo** — demo mode is detected from `window.location.search` in a single `useEffect` that short-circuits before any Supabase call runs
-- **Settings via context** — theme/density/language/view are stored in `SettingsContext`, applied as `data-*` attributes on `<html>`, and read by CSS selectors — no JS style injection
-- **i18n without a library** — a single `STRINGS` object keyed by `"he" | "en"` covers all UI copy; the active set is passed via context as `t`
+- **Email reminders** - scheduled nudges for applications that have been quiet for too long
+- **Application analytics** - charts showing application volume over time, stage drop-off rates, and response rates by industry or company size
+- **Resume versioning** - store multiple CV versions and tag which version was sent to each application
+- **Import from LinkedIn** - parse exported LinkedIn job application data to populate the tracker automatically
 
 ---
 
-## License
+## Built by Rachel Yaron
 
-MIT
+Product-minded developer with a focus on user experience and shipping things that work.
+
+- GitHub: [github.com/rachelyaron](https://github.com/rachelyaron)
