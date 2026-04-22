@@ -41,7 +41,7 @@ export default function Timeline({ stages, onChange, compact = false, lang }: Ti
   return (
     <div
       className="timeline"
-      dir="ltr"
+      dir={lang === "he" ? "rtl" : "ltr"}
       style={{ minWidth: compact ? Math.max(180, stages.length * 46) : undefined }}
     >
       {stages.map((stage, idx) => {
