@@ -63,6 +63,10 @@ export const STRINGS = {
     confirmDelete: "למחוק את המועמדות?",
     loading: "טוען מועמדויות...",
 
+    // ── Auth / landing ────────────────────────────────────────────────────
+    authDemoMsg: "זוהי גרסת הדגמה - נסו את האפליקציה באופן חופשי",
+    authDemoBtn: "כניסת דמו",
+
     // ── Demo banner ───────────────────────────────────────────────────────
     demoBanner: "מצב הדגמה — השינויים אינם נשמרים",
     demoExit: "יציאה מהדמו",
@@ -160,6 +164,10 @@ export const STRINGS = {
     // ── Misc ──────────────────────────────────────────────────────────────
     confirmDelete: "Delete this application?",
     loading: "Loading applications...",
+
+    // ── Auth / landing ────────────────────────────────────────────────────
+    authDemoMsg: "This is a demo - explore the app freely",
+    authDemoBtn: "Try demo",
 
     // ── Demo banner ───────────────────────────────────────────────────────
     demoBanner: "Demo mode — changes are not saved",
